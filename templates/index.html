@@ -1,35 +1,67 @@
-<html>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-    <title>Best store!</title>
-    <script type="text/javascript" src="/static/update.js"></script>
-    <link href="static/store.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Телефонная книга</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-
 <body>
-    <h1>Furniture store:</h1>
-    <h3>Add new product:</h3>
-    <form>
-        <div>
-            <input type="text" name="prod_name" id="prod_name">
-            <label for="prod_name">Product name</label>
-        </div>
-        <div>
-            <input type="number" name="price" id="price">
-            <label for="price">Price (rub.)</label>
-        </div>
-        <button onClick="addProduct()">Add</button>
-    </form>
-    <ul>
-        {% for product in products_list %}
-        <li>
-            <div>
-                <div>{{ product['prod_name'] }}</div>
-                <div>{{ product['price'] }} rub.</div>
-                <input value="{{product['id']}}" onChange="updateProd(this)" name="in_stock" type="checkbox" {% if product.in_stock %} checked {% endif %}>
-                <label for="in_stock">In stock</label>
+    <div class="container">
+        <h1>Телефонная книга</h1>
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Имя:</label>
+                <input type="text" id="name" name="name" required>
             </div>
-        </li>
-        {% endfor %}
-    </ul>
+            <div class="form-group">
+                <label for="phone">Номер телефона:</label>
+                <input type="text" id="phone" name="phone" required>
+            </div>
+            <button type="submit">Добавить контакт</button>
+            <button type="button" onclick="confirmClear()" class="clear-btn">Clear All</button>
+        </form>
+        
+        <h2>Контакты</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Телефон</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr>
+                    <td>{{ contact.name }}</td>
+                    <td>{{ contact.phone }}</td>
+                    <td>
+                        <a href="{{ url_for('delete', id=contact.id) }}" class="delete-btn">Удалить</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function confirmClear() {
+            if (confirm('Вы уверены, что хотите удалить ВСЕ контакты? Это действие нельзя отменить.')) {
+                // Простая версия без CSRF
+                fetch("{{ url_for('clear_all') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    }
+                }).then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    }
+                });
+            }
+        }
+        </script>
 </body>
 </html>
