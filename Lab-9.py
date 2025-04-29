@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+import re
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///phonebook.db'
@@ -15,11 +16,18 @@ class Contact(db.Model):
     def __repr__(self):
         return f'<Contact {self.name}>'
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         name = request.form['name']
         phone = request.form['phone']
+        
+        
+        if not re.match(r'^\+?[0-9\s\-\(\)]{6,}$', phone):
+            return render_template('index.html', 
+                                 contacts=Contact.query.order_by(Contact.name).all(),
+                                 error="Некорректный номер телефона. Используйте только цифры, пробелы, дефисы, скобки и + в начале")
         
         new_contact = Contact(name=name, phone=phone)
         try:
@@ -29,8 +37,7 @@ def index():
         except:
             return 'При добавлении контакта произошла ошибка'
     
-    contacts = Contact.query.order_by(Contact.name).all()
-    return render_template('index.html', contacts=contacts)
+    return render_template('index.html', contacts=Contact.query.order_by(Contact.name).all())
 
 @app.route('/delete/<int:id>')
 def delete(id):

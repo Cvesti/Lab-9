@@ -10,19 +10,33 @@
     <div class="container">
         <h1>Телефонная книга</h1>
         
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
             <div class="form-group">
                 <label for="name">Имя:</label>
                 <input type="text" id="name" name="name" required>
             </div>
+            
             <div class="form-group">
                 <label for="phone">Номер телефона:</label>
-                <input type="text" id="phone" name="phone" required>
+                <input type="tel" id="phone" name="phone" 
+                       pattern="\+?[0-9\s\-\(\)]+" 
+                       title="Только цифры, пробелы, дефисы, скобки и + в начале"
+                       required>
             </div>
+            
             <button type="submit">Добавить контакт</button>
-            <button type="button" onclick="confirmClear()" class="clear-btn">Clear All</button>
+            {% if contacts %}
+            <button type="button" onclick="confirmClear()" class="clear-btn">Очистить всё</button>
+            {% endif %}
         </form>
         
+        {% if contacts %}
         <h2>Контакты</h2>
         <table>
             <thead>
@@ -44,24 +58,25 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
     </div>
 
     <script>
-        function confirmClear() {
-            if (confirm('Вы уверены, что хотите удалить ВСЕ контакты? Это действие нельзя отменить.')) {
-                // Простая версия без CSRF
-                fetch("{{ url_for('clear_all') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    }
-                }).then(response => {
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    }
-                });
-            }
+    function confirmClear() {
+        if (confirm('Вы уверены, что хотите удалить ВСЕ контакты? Это действие нельзя отменить.')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ url_for('clear_all') }}";
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = "{{ csrf_token() }}";
+            form.appendChild(csrfInput);
+            
+            document.body.appendChild(form);
+            form.submit();
         }
-        </script>
+    }
+    </script>
 </body>
 </html>
